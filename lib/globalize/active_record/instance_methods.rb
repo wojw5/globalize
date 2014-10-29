@@ -30,12 +30,17 @@ module Globalize
         if attribute_changed?(name_str)
           # If there's already a change, delete it if this undoes the change.
           old = changed_attributes[name_str]
-          changed_attributes.delete(name_str) if value == old
+          if value == old && @_globalize_dirty.except(options[:locale]).empty?
+            changed_attributes.delete(name_str) 
+            @_globalize_dirty.delete options[:locale]
+          end
         else
           # If there's not a change yet, record it.
           old = globalize.fetch(options[:locale], name)
           old = old.dup if old.duplicable?
           changed_attributes[name_str] = old if value != old
+          @_globalize_dirty ||= {}
+          @_globalize_dirty[options[:locale]] = true
         end
 
         globalize.write(options[:locale], name, value)
@@ -92,6 +97,7 @@ module Globalize
       end
 
       def reload(options = nil)
+        @_globalize_dirty = {}
         translation_caches.clear
         translated_attribute_names.each { |name| @attributes.delete(name.to_s) }
         globalize.reset

@@ -86,6 +86,19 @@ class GlobalizeTest < MiniTest::Spec
       end
     end
 
+    describe '#write_attribute' do
+      it "saves translations record for locale passed in" do
+        post = Post.create(:title => 'title', :locale => :de)
+        post.update_attributes(:title => 'title', :locale => :en)
+
+        post.reload
+
+        post.write_attribute :title, 'Titel', :locale => :de
+        post.write_attribute :title, 'title', :locale => :en
+        assert_equal true, post.attribute_changed?('title')
+      end
+    end
+
     describe '#reload' do
       it "works with translated attributes" do
         post = Post.create(:title => 'foo')

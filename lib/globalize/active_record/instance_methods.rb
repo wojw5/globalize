@@ -29,19 +29,20 @@ module Globalize
         # ActiveRecord::AttributeMethods::Dirty#write_attribute.
         name_str = name.to_s
         @_globalize_dirty ||= {}
-        if attribute_changed?(name_str) && @_globalize_dirty[options[:locale]]
+        @_globalize_dirty[name_str] ||= {}
+        if attribute_changed?(name_str) && @_globalize_dirty[name_str][options[:locale]]
           # If there's already a change, delete it if this undoes the change.
-          old = @_globalize_dirty[options[:locale]]
+          old = @_globalize_dirty[name_str][options[:locale]]
           if value == old
-            changed_attributes.delete(name_str) if @_globalize_dirty.except(options[:locale]).empty?
-            @_globalize_dirty.delete options[:locale]
+            changed_attributes.delete(name_str) if @_globalize_dirty[name_str].except(options[:locale]).empty?
+            @_globalize_dirty[name_str].delete options[:locale]
           end
         else
           # If there's not a change yet, record it.
           old = globalize.fetch(options[:locale], name)
           old = old.dup if old.duplicable?
           changed_attributes[name_str] = old if value != old
-          @_globalize_dirty[options[:locale]] = old
+          @_globalize_dirty[name_str][options[:locale]] = old
         end
 
         globalize.write(options[:locale], name, value)

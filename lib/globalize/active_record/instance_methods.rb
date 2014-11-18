@@ -20,6 +20,7 @@ module Globalize
       end
 
 
+
       def write_attribute(name, value, options = {})
         return super(name, value) unless translated?(name)
 
@@ -28,24 +29,30 @@ module Globalize
         # Dirty tracking, paraphrased from
         # ActiveRecord::AttributeMethods::Dirty#write_attribute.
         name_str = name.to_s
-        @_globalize_dirty ||= {}
-        @_globalize_dirty[name_str] ||= {}
-        if attribute_changed?(name_str) && @_globalize_dirty[name_str][options[:locale]]
+
+        store_old_value name, name_str, options[:locale]
+        old_values = @_globalize_dirty[name_str]
+        old_value = old_values[options[:locale]]
+        if attribute_changed?(name_str) && old_values.key?(options[:locale]) && value == old_value
           # If there's already a change, delete it if this undoes the change.
-          old = @_globalize_dirty[name_str][options[:locale]]
-          if value == old
-            changed_attributes.delete(name_str) if @_globalize_dirty[name_str].except(options[:locale]).empty?
-            @_globalize_dirty[name_str].delete options[:locale]
-          end
+          changed_attributes.delete(name_str) if old_values.except(options[:locale]).empty?
+          old_values.delete options[:locale]
         else
           # If there's not a change yet, record it.
-          old = globalize.fetch(options[:locale], name)
-          old = old.dup if old.duplicable?
-          changed_attributes[name_str] = old if value != old
-          @_globalize_dirty[name_str][options[:locale]] = old
+          changed_attributes[name_str] = old_value if value != old_value
         end
 
         globalize.write(options[:locale], name, value)
+      end
+
+      def store_old_value name, name_str, locale
+        @_globalize_dirty ||= {}
+        @_globalize_dirty[name_str] ||= {}
+        unless @_globalize_dirty[name_str].key? locale
+          old = globalize.fetch(locale, name)
+          old = old.dup if old.duplicable?
+          @_globalize_dirty[name_str][locale] = old
+        end
       end
 
       def read_attribute(name, options = {})

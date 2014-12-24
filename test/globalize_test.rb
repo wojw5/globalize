@@ -107,7 +107,7 @@ class GlobalizeTest < MiniTest::Spec
 
         post.write_attribute :title, 'Titel', :locale => :de
         post.write_attribute :title, 'title', :locale => :en
-        assert_equal true, post.attribute_changed?('title')
+        assert_equal true, post.changed.include?('title')
       end
     end
 

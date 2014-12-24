@@ -33,7 +33,7 @@ module Globalize
         store_old_value name, name_str, options[:locale]
         old_values = @_globalize_dirty[name_str]
         old_value = old_values[options[:locale]]
-        if attribute_changed?(name_str) && old_values.key?(options[:locale]) && value == old_value
+        if self.changed.include?(name_str) && old_values.key?(options[:locale]) && value == old_value
           # If there's already a change, delete it if this undoes the change.
           changed_attributes.delete(name_str) if old_values.except(options[:locale]).empty?
           old_values.delete options[:locale]
